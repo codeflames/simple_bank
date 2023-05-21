@@ -1,17 +1,31 @@
 package main
 
 import (
-	"fmt"
+	"database/sql"
+	"log"
 
-	"github.com/codeflames/simplebank/utils"
+	"github.com/codeflames/simplebank/api"
+	db "github.com/codeflames/simplebank/db/sqlc"
+	_ "github.com/lib/pq"
+)
+
+const (
+	dbDriver      = "postgres"
+	dbSource      = "postgresql://root:password@localhost:5432/simple_bank?sslmode=disable"
+	serverAddress = "0.0.0.0:8080"
 )
 
 func main() {
-	len := 5
-
-	for i := 0; i < len; i++ {
-		hello := utils.RandomString(utils.RandomInt(5, 10))
-
-		fmt.Println(hello)
+	conn, err := sql.Open(dbDriver, dbSource)
+	if err != nil {
+		log.Fatal("cannot connect to db:", err)
 	}
+	store := db.NewStore(conn)
+	server := api.NewServer(store)
+
+	err = server.Start(serverAddress)
+	if err != nil {
+		log.Fatal("cannot start server:", err)
+	}
+
 }
